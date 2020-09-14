@@ -1,0 +1,14 @@
+  # Contra qué máquinas/entornos vamos a trabajar
+- hosts:
+  # Decidir el usuario con el que conectarnos a un entorno
+  remote_user: 
+  # Decidir el orden de los entornos en el que se van a ir ejecutando las tareas
+  order: inventory | reverse_inventory | sorted | reverse_sorted | suffle
+    # También podré configurar sobre cuántos entornos quiero operar simultaneamente.
+    # Esta info no viene en este fichero
+  # Variables que luego utilizar en las tareas
+  vars:
+  # Listado de todas las tareas que queriamos realizar en los entornos 
+  tasks:
+  # Listado de tareas que se ejecuran bajo ciertos condiciones (cuando ocurren unos eventos)
+  handlers:
