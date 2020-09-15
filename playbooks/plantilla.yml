@@ -113,6 +113,53 @@
         - ansible_facts.distribution == 'Ubuntu'
         - ansible_facts.distribution_major_version > "16"
       #vars: Variables a nivel de tarea
+    
+    # Tarea básica que al ejecutarse, pide a su vez que se ejecute otra tarea (mediante INVOCACION DIRECTA)
+    - name: 11- Tarea que dispara otra tarea (handler)
+      debug: 
+        msg: "HAGO LO QUE SEA, y si se cambia, lanzo la tarea Formatear disco"
+      # INVOCACION DIRECTA: Solo se ejecutará si la tarea 11 ha cambiado algo
+      # En este caso, como la tarea debug no cambia nada, no se llama a la nueva tarea
+      notify: Formatear Disco
 
+    # Tarea básica que al ejecutarse, pide a su vez que se ejecute otra tarea (mediante INVOCACION DIRECTA)
+    - name: 12- Tarea que dispara otra tarea (handler)
+      debug: 
+        msg: "HAGO LO QUE SEA, y si se cambia, lanzo la tarea Formatear disco"
+      # Este parametro permite determina cuando la tarea se marca como que SI ha cambiado algo
+      # Aqui pondriamos una condicion. Si la condición vale True, la tarea se marcara como CHANGED
+      changed_when: True
+      # INVOCACION DIRECTA: Solo se ejecutará si la tarea 11 ha cambiado algo
+      # En este caso, como la tarea debug SI VA A CAMBIAR, por lo que SI se llama a la nueva tarea
+      notify: Formatear Disco
+
+    # Tarea básica que al ejecutarse, pide a su vez que se ejecute otra tarea (mediante INVOCACION DIRECTA)
+    - name: 13- Tarea que dispara un evento
+      debug: 
+        msg: "HAGO LO QUE SEA, y si se cambia, lanzo la tarea Formatear disco"
+      # Este parametro permite determina cuando la tarea se marca como que SI ha cambiado algo
+      # Aqui pondriamos una condicion. Si la condición vale True, la tarea se marcara como CHANGED
+      changed_when: True
+      # NO es INVOCACION DIRECTA
+      # En este caso invocamos a un EVENTO
+      # Todos los handler subscritos al evento, se ejecutarán
+      notify: FORMATEAR
+
+    - name: ULTIMA TAREA
+      debug: 
+        msg: "HEMOS ACABADO LAS TAREAS NORMALES"
+
+  # LOS HANDLERS SOLO SE EJECUTAN 1 VEZ y después de todas las tareas!!!
   # Listado de tareas que se ejecuran bajo ciertos condiciones (cuando ocurren unos eventos)
-  # handlers:
+  handlers:
+    - name: Formatear Disco
+      debug: 
+        msg: Estoy formateando el disco !!!
+      # NOS PERMITE DEFINIR UN EVENTO
+      listen: FORMATEAR
+    
+    - name: Post-Formatear Disco
+      debug: 
+        msg: Estoy haciendo cosas después de formatear el disco !!!
+      listen: FORMATEAR
+
