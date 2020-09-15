@@ -155,6 +155,7 @@
     # A la hora de ejecutar un playbook, podemos pedir que SOLO se ejecuten las 
     # tareas que tenga asignadas unas determinadas etiquetas
     # > ansible-playbook <params.....>  --tags <tags-que-quiero-procesar> 
+    # > ansible-playbook <params.....>  --skip-tags <tags-que-quiero-procesar> 
     - name: FILTRO 1 - INSTALACION
       debug: 
         msg: "Soy una tarea de instalación"
@@ -267,8 +268,87 @@
       loop: "{{ ansible_facts.processor }}"
       loop_control:
         index_var: numero
+        # NOTA: TODO:  Ver el resto de variables que podemos utilizar
 
+##############################################################################################
+#   TRABAJO CON BLOQUES
+##############################################################################################
             
+    # A nivel de bloque podemos aplicar: WHEN, IGNORE_ERRORS, VARS
+    
+    - name: Tarea en bloque PRIMERA
+      block:
+
+        - name: Tarea 1 del bloque
+          debug: 
+            msg: "Tarea 1 del bloque"
+
+        - name: Tarea 2 del bloque
+          debug: 
+            msg: "Tarea 2 del bloque"
+
+        - name: Tarea 3 del bloque
+          debug: 
+            msg: "Tarea 3 del bloque"
+
+      when: ansible_facts.distribution == 'CentOS'
+      ignore_errors: True
+    
+    # A nivel de bloque podemos controlar ERRORES
+    - name: Tarea en bloque SEGUNDO - CONTROL ERRORES
+      block:
+
+        - name: Tarea que funciona bien
+          debug: 
+            msg: "Hola, funciono bien"
+
+        - name: Tarea que funciona mal
+          shell: 
+            cmd: exit 0
+
+        - name: Tarea que ya no se ejecuta por haber aparecido un error
+          debug: 
+            msg: "YO NO ME EJECUTO :'("
+      
+      rescue:
+        - name: Tarea que se ejecuta por haber aparecido un error
+          debug: 
+            msg: "YO ME EJECUTO PARA ARREGLAR EL DESAGUISADO!"
+      
+      always:
+        - name: Tarea que se ejecuta SIEMPRE despues del bloque, haya error o no
+          debug: 
+            msg: "YO ME EJECUTO EN CUALQUIER CASO"
+      
+
+##############################################################################################
+#   TRABAJANDO CON NINJAS !!!!
+##############################################################################################
+    - name: Tarea utilizando plantillas JINJA para Control del CASE
+      debug: 
+        msg: "El valor del texto es {{ texto | upper | lower | capitalize | title }}"
+      vars:
+        texto: Soy el texto de la variable
+            
+    - name: Tarea utilizando plantillas JINJA- Espacios en blanco
+      debug: 
+        msg: "El valor del texto es --{{ texto | trim }}--"
+      vars:
+        texto: "   Soy el texto de la variable   "
+            
+    - name: Tarea utilizando plantillas JINJA- Listas
+      debug: 
+        msg: "Puertos {{ puertos | sort | reverse | list | max }}"
+            # max min sum last first length
+      vars:
+        puertos:
+          - 80
+          - 8080
+          - 8443
+          - 9443
+          - 9080
+        
+        
     - name: ULTIMA TAREA
       debug: 
         msg: "HEMOS ACABADO LAS TAREAS NORMALES"
