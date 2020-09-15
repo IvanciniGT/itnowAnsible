@@ -1,0 +1,106 @@
+#
+# PLAYBOOK para instalación y mantenimiento de servidores NGINX
+#
+# uso:
+#   Instalar NGINX, GIT y CURL en su ultima versión
+#   > ansible-playbook playbook.yml
+#
+#   Actualizar NGINX, GIT y CURL a su ultima versión
+#   > ansible-playbook playbook.yml 
+#
+#   Asegura que tiene NGINX, GIT y CURL instalados, pero no los actualiza
+#   > ansible-playbook playbook.yml --skip-tags actualizar
+#
+#   Asegura que tiene NGINX, GIT y CURL instalados, pero no actualiza NGINX
+#   > ansible-playbook playbook.yml --skip-tags "actualizar,nginx""
+#
+
+# Maquina 1 -> Ubuntu
+- hosts: maquina1
+  remote_user: root
+  # Estas variables se pueden reasignar por linea de comandos
+  # Estas variables ademas se pueden personalizar para cada entorno en el fichero de inventario
+  vars:
+    nginx_port: 80
+    mensaje_comprobar_nginx: NGINX
+    
+  tasks:  
+# Actualizar repositiors de software
+    - name: Actualizar repositorios
+      apt: update_cache=yes
+
+# Instalacion de nginx
+    - name: Asegurarme que tengo nginx
+      apt: name=nginx state=present
+# Instalacion de curl
+    - name: Asegurarme que tengo curl
+      apt: name=curl state=present
+# Instalacion de git
+    - name: Asegurarme que tengo git
+      apt: name=git state=present
+
+# Actualizar nginx
+    - name: Asegurarme que tengo nginx parado!!
+      service: name=nginx state=stopped
+      tags:
+        - actualizar
+        - nginx
+      
+    - name: Asegurarme que tengo nginx en la última versión
+      apt: name=nginx state=latest
+      tags:
+        - actualizar
+        - nginx
+# Actualzar curl
+    - name: Asegurarme que tengo curl en la última versión
+      apt: name=curl state=latest
+      tags:
+        - actualizar
+        - curl
+# Actualzar git
+    - name: Asegurarme que tengo git en la última versión
+      apt: name=git state=latest
+      tags:
+        - actualizar
+        - git
+
+# Configurar NGINX
+# GENERAR un fichero de configuración <- CONMIGO
+# CARGAR UNA WEB DE UN GIT <- CONMIGO
+
+# Arrancar el """servicio""" de nginx
+    - name: Asegurarme que tengo nginx arrancado
+      service: name=nginx state=started
+
+# Abrir el puerto 80 en el firewall de la maquina y que el firewall esté funcionando
+    - name: Asegurarme que el firewall está funcionando
+      ufw:
+        state: enabled
+        policy: deny
+        
+    - name: Abrir el puerto 80
+      ufw:
+        rule: allow
+        port: "{{ nginx_port }}"
+        proto: tcp
+        
+# Comprobación
+# Revisar el puerto: 80
+    - name: Asegurarme que el puerto 80 está funcionando
+      wait_for: 
+        host: "{{ ansible_hostname }}"
+        port: "{{ nginx_port }}"
+        timeout: 10                        # Espero un poco a ver si el puerto conecta
+        state: started                     # El puerto debe estar abierto para escucha
+        delay: 2                           # Espera un par de segundos antes de comenzar a mirar si está abierto
+        connect_timeout: 2                 # Espera un par de segundos entre intentos
+
+# Comprobación de que el servidor devuelve contenido: COHERENTE!!!!
+    - name: Comprobar que nginx contesta algo adecuado
+      uri:
+        url: "http://{{ ansible_hostname }}:{{ nginx_port }"
+        return_content: yes
+        status_code: 200                   # Conexión http exitosa
+        timeout: 10                        # Si en 10 seg no lo tienes, falla
+      register: conexion
+      failed_when: "'{{ mensaje_comprobar_nginx }}' not in conexion.content"
