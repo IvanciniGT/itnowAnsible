@@ -1,14 +1,118 @@
+  # PLANTILLA DE PLAYBOOK
+  
+  # Para ejecutar nuestro playbook:
+  #  > ansible-playbook -i <fichero_inventario> <fichero_playbook>
+  
   # Contra qué máquinas/entornos vamos a trabajar
-- hosts:
+- hosts: localhost
+  # Para desactivar Gathering Facts, lo pondriamos a 'False'
+  gather_facts: True
+      # Nota: Para ver las características de una máuina también podemos ejecutar desde terminal:
+      # > ansible localhost -m setup
   # Decidir el usuario con el que conectarnos a un entorno
-  remote_user: 
+  remote_user: root
   # Decidir el orden de los entornos en el que se van a ir ejecutando las tareas
-  order: inventory | reverse_inventory | sorted | reverse_sorted | suffle
+  order: inventory 
+         # inventory | reverse_inventory | sorted | reverse_sorted | suffle
+  
     # También podré configurar sobre cuántos entornos quiero operar simultaneamente.
     # Esta info no viene en este fichero
   # Variables que luego utilizar en las tareas
   vars:
+    # Variable simple
+    puerto: 8080
+    # Variables complejas (con estructura jerarquica)
+    configuracion:
+      nginx:
+        puerto: 80
+        ssl: false
+      apache:
+        puerto: 
+          # Esto es una lista
+          - 443
+          - 9443
+        ssl: true
+        certificado: ruta al fichero del certificado
   # Listado de todas las tareas que queriamos realizar en los entornos 
   tasks:
+
+    # Tarea básica que muestra un mensaje por pantalla
+    - name: 1- Inicialización
+      debug: 
+        msg: Inicialización de nuestro playbook
+
+##############################################################################################
+#   VARIABLES
+##############################################################################################
+
+    # Tarea básica que muestra un mensaje por pantalla, usando variables
+    - name: 2- Mostrar valor de variable
+      debug: 
+        # Cuando usamos variables, y por ende utilizamos la doble llave, tenemos que poner la linea entera entre comilla doble
+        msg: "Mi variable puerto tiene el valor asignado: {{ puerto }}"
+
+    # Tarea básica que muestra un mensaje por pantalla, escapando llaves
+    - name: 3- Poder generar una doble llave en un texto
+      debug: 
+        # Para escapar la doble llave, comenzamos la lineacon la palabra !unsafe
+        msg: !unsafe "Para obtener el valor de una variable, debo utilizar la sintaxis: {{ puerto }}"
+
+    # Tarea básica que muestra un mensaje por pantalla, usando variables jerarquicas
+    - name: 4- Mostrar valor de variable jerarquica
+      debug: 
+        # Cuando usamos variablesjerarquicas utilizamos un punto '.' para bajar de nivel dentro de la jerarquia
+        msg: "Mi variable puerto tiene el valor asignado: {{ configuracion.apache.puerto }}"
+
+    # Tarea básica que muestra un mensaje por pantalla, usando variables
+    - name: 5- Redefinir el valor de una variable
+      debug: 
+        msg: "Mi variable puerto AHORA tiene el valor asignado: {{ puerto }}"
+      # Refedinir el valor de una variable previamente creada, o crear variables nuevas a nivel de tarea
+      vars:
+        puerto: 9999
+
+    # Tarea básica que muestra un mensaje por pantalla, usando variables de lista
+    - name: 6- Mostrar valor de variable de lista
+      debug: 
+        # Cuando usamos variables de lista utilizamos la doble llave
+        msg: "El segundo puerto del apache es: {{ configuracion.apache.puerto[1] }}"
+
+    # Tarea que muestre los facts de nuestras maquinas
+    - name: 7- Mostrar características de las maquinas
+      debug: 
+        # La variable ansible_facts cambiará para cada entorno en el que se esté ejecutando el playbook
+        msg: >
+          "Sistema operativo: {{ ansible_facts.distribution }} "
+          "version: {{ ansible_facts.distribution_version }}"
+
+##############################################################################################
+#   CONDICIONALES
+##############################################################################################
+    # Tarea que se ejecuta bajo ciertas condiciones
+    - name: 8- Tarea que se ejecuta solamente en máquinas Ubuntu
+      debug: 
+        msg: "Esta maquina si es UBUNTU: {{ ansible_facts.distribution }}"
+      # Me permnite determinar cuando se debe ejecutar la tarea (es como un if)
+      when: ansible_facts.distribution == 'Ubuntu'
+      #vars: Variables a nivel de tarea
+
+    - name: 9- Tarea que se ejecuta solamente en máquinas Redhat
+      debug: 
+        msg: "Esta maquina si es REDHAT: {{ ansible_facts.distribution }}"
+      # Me permnite determinar cuando se debe ejecutar la tarea (es como un if)
+      when: ansible_facts.distribution == 'Redhat'
+
+    # Tarea condicional COMPUESTAS
+    - name: 10- Tarea que se ejecuta solamente en máquinas con UBUNTU con versión del so > 16
+      debug: 
+        msg: "Esta maquina si es UBUNTU: {{ ansible_facts.distribution }} {{ ansible_facts.distribution_major_version }}"
+      # Me permnite determinar cuando se debe ejecutar la tarea (es como un if)
+      #when: ansible_facts.distribution == 'Ubuntu' and ansible_facts.distribution_major_version > "16"
+      when: 
+        # Esta lista se procesa como un AND
+        - ansible_facts.distribution == 'Ubuntu'
+        - ansible_facts.distribution_major_version > "16"
+      #vars: Variables a nivel de tarea
+
   # Listado de tareas que se ejecuran bajo ciertos condiciones (cuando ocurren unos eventos)
-  handlers:
+  # handlers:
