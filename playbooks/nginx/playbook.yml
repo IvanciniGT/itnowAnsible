@@ -22,13 +22,15 @@
   # Estas variables ademas se pueden personalizar para cada entorno en el fichero de inventario
   vars:
     nginx_port: 80
-    mensaje_comprobar_nginx: nginx
+    mensaje_comprobar_nginx: 'Soy el fichero de la web'
     paquetes_requeridos: 
         - nginx
         - git
         - curl
         - ufw
     nginx_web_path: /web
+    nginx_server_name: 172.17.0.2
+    
   tasks:  
     # Actualizar repositiors de software
     - name: Actualizar repositorios
@@ -64,6 +66,7 @@
       tags:
         - actualizar
         - nginx
+      register: nginx_parado
       
     # Actualzar nginx
     - name: Asegurarme que tengo nginx en la última versión
@@ -100,10 +103,23 @@
         dest: /etc/nginx/conf.d/mi_web.conf
         src: conf.template
         mode: 0400
-# CARGAR UNA WEB DE UN GIT <- CONMIGO
-
+#      notify: CONFIGURACION_CAMBIADA # Esta solucion tiene problemas...ver nota en handlers
+      register: configuracion
+      
+    # CARGAR UNA WEB DE UN GIT <- CONMIGO
+    - name: Clonar la web
+      git:
+        repo: https://github.com/IvanciniGT/webEjemploAnsible
+        dest: "{{ nginx_web_path }}"
+    
     # Arrancar el """servicio""" de nginx
-    - name: Asegurarme que tengo nginx arrancado
+    - name: Asegurarme que reinicio nginx si hace falta
+      service: name=nginx state=restarted
+      when: configuracion is changed or nginx_parado is defined
+    
+    # Me asegura que si no he hecho un reinicio del servicio y por algun motivo esta parado
+    # Se inicia
+    - name: Asegurar que nginx quede arrancado
       service: name=nginx state=started
     
     #    - name: Abrir el puerto 80
@@ -138,9 +154,16 @@
     # Comprobación de que el servidor devuelve contenido: COHERENTE!!!!
     - name: Comprobar que nginx contesta algo adecuado
       uri:
-        url: "http://{{ ansible_hostname }}:{{ nginx_port }}"
+        url: "http://{{ nginx_server_name }}:{{ nginx_port }}"
         return_content: yes
         status_code: 200                   # Conexión http exitosa
         timeout: 10                        # Si en 10 seg no lo tienes, falla
       register: conexion
       failed_when:  mensaje_comprobar_nginx not in conexion.content
+      
+#handlers:
+    # PROBLEMA: LAS COMPROBACIONES SE PUEDEN HACER ANTES DE QUE NGINX ESTE ARRANCADO
+    # Arrancar el """servicio""" de nginx
+    #- name: Asegurarme que tengo nginx arrancado
+    #  service: name=nginx state=restarted
+    #  listen: CONFIGURACION_CAMBIADA
