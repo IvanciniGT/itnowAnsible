@@ -23,27 +23,40 @@
   vars:
     nginx_port: 80
     mensaje_comprobar_nginx: nginx
-    
+    paquetes_requeridos: 
+        - nginx
+        - git
+        - curl
+        - ufw
+    nginx_web_path: /web
   tasks:  
     # Actualizar repositiors de software
     - name: Actualizar repositorios
       apt: update_cache=yes
 
+    # Instalacion de paquetes
+    - name: Asegurarme que tengo los paquetes necesarios
+      #apt: "name={{ item }} state=present"
+      apt: 
+        name: "{{ item }}"
+        state: present
+      loop: "{{ paquetes_requeridos }}"
+
     # Instalacion de nginx
-    - name: Asegurarme que tengo nginx
-      apt: name=nginx state=present
-    
+    #- name: Asegurarme que tengo nginx
+    #  apt: name=nginx state=present
+
     # Instalacion de curl
-    - name: Asegurarme que tengo curl
-      apt: name=curl state=present
+    #- name: Asegurarme que tengo curl
+    #  apt: name=curl state=present
     
     # Instalacion de git
-    - name: Asegurarme que tengo git
-      apt: name=git state=present
+    #- name: Asegurarme que tengo git
+    #  apt: name=git state=present
     
     # Instalacion de ufw
-    - name: Asegurarme que tengo ufw
-      apt: name=ufw state=present
+    #- name: Asegurarme que tengo ufw
+    #  apt: name=ufw state=present
 
     # Actualizar nginx
     - name: Asegurarme que tengo nginx parado!!
@@ -52,6 +65,13 @@
         - actualizar
         - nginx
       
+    # Actualzar nginx
+    - name: Asegurarme que tengo nginx en la última versión
+      apt: name=nginx state=latest
+      tags:
+        - actualizar
+        - nignx
+        
     # Actualzar curl
     - name: Asegurarme que tengo curl en la última versión
       apt: name=curl state=latest
@@ -73,25 +93,36 @@
         - actualizar
         - ufw
 
-# Configurar NGINX
-# GENERAR un fichero de configuración <- CONMIGO -> TEMPLATE JINJA
+    # Configurar NGINX
+    # GENERAR un fichero de configuración <- CONMIGO -> TEMPLATE JINJA
+    - name: Generar el fichero de configuración de nginx
+      template:
+        dest: /etc/nginx/conf.d/mi_web.conf
+        src: conf.template
+        mode: 0400
 # CARGAR UNA WEB DE UN GIT <- CONMIGO
 
     # Arrancar el """servicio""" de nginx
     - name: Asegurarme que tengo nginx arrancado
       service: name=nginx state=started
     
-    # Abrir el puerto 80 en el firewall de la maquina y que el firewall esté funcionando
-    #    - name: Asegurarme que el firewall está funcionando
-    #      ufw:
-    #        state: enabled
-    #        policy: deny
-            
     #    - name: Abrir el puerto 80
     #      ufw:
     #        rule: allow
     #        port: "{{ nginx_port }}"
     #        proto: tcp
+
+    #    - name: Abrir el puerto 22
+    #      ufw:
+    #        rule: allow
+    #        port: "{{ nginx_port }}"
+    #        proto: tcp
+
+    #    - name: Asegurarme que el firewall está funcionando
+    #      ufw:
+    #        state: enabled
+    #        policy: deny
+            
             
     # Comprobación
     # Revisar el puerto: 80
