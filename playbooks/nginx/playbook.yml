@@ -16,22 +16,23 @@
 #
 
 # Maquina 1 -> Ubuntu
-- hosts: 172.17.0.2
+- hosts: all
   remote_user: root
   # Estas variables se pueden reasignar por linea de comandos
   # Estas variables ademas se pueden personalizar para cada entorno en el fichero de inventario
   vars:
-    nginx_port: 80
-    mensaje_comprobar_nginx: 'Soy el fichero de la web'
-    paquetes_requeridos: 
-        - nginx
-        - git
-        - curl
-        - ufw
-    nginx_web_path: /web
-    nginx_server_name: 172.17.0.2
-    
+    # Vaya a ser que a alguien se le olvide pasarla
+    nginx_web_path: /www
+    nginx_port: 90
   tasks:  
+    
+    # Los tasks separados en modulos: ROLES
+    # 1 - Instalacion -> MODULARIZAR: REUSABILIDAD
+    # 2 - Actualizacion
+    # 3 - Configuracion nginx
+    # 4 - Tests -> NGINX? APACHE? TOMCAT? WEBLOGIC?
+  
+  
     # Actualizar repositiors de software
     - name: Actualizar repositorios
       apt: update_cache=yes

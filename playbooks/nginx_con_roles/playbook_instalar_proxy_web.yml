@@ -1,0 +1,10 @@
+## USO ESPECIFICO. Un despliegue que voy a hacer... en los servidores de desarrollo
+#                                                   de mi web principal en todos los servidores
+
+- hosts: all
+  remote_user: root
+  
+  roles:
+    - webserver
+    - configurar_proxy
+    - web_test

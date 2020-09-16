@@ -1,0 +1,4 @@
+ansible_host: 172.17.0.2
+nginx_port: 8080
+mensaje_comprobar_nginx: 'Soy el fichero de la web'
+nginx_server_name: 172.17.0.2

@@ -5,6 +5,16 @@
   
   # Contra qué máquinas/entornos vamos a trabajar
 - hosts: localhost
+# all (*) -> Todas las maquinas del inventario (teniendo en cuenta subgrupos)
+# hostname -> Busca en el inventario (donde quiera que esté) ese hostname
+# server1:server2 (server1, server2) -> Se ejecuta el playbook para ambos servidores
+# webservers -> Todos los servidores de un grupo (incluyendo los subgrupos)
+# mysqlservers:oracleservers -> Todos los servidores de ambos grupos
+# webservers:!produccion -> Todos los webservers que NO sean de produccion
+# webserves:&produccion -> Todos los webservers que SEAN de produccion
+
+
+
   # Para desactivar Gathering Facts, lo pondriamos a 'False'
   gather_facts: True
       # Nota: Para ver las características de una máuina también podemos ejecutar desde terminal:
