@@ -1,0 +1,66 @@
+- hosts: all
+  remote_user: root
+  vars:
+      ports:
+        - 80
+        - 8080
+      servers:
+        - server80
+        - server8080
+      todo2: "{{ ports|zip(servers) }}"
+
+  pre_tasks:
+    - debug:
+        msg: PRE
+      changed_when: True
+      notify: pre_handler
+
+  tasks:
+    - debug:
+        msg: TK1
+      changed_when: True
+      notify: tk1_handler
+    - meta: flush_handlers
+    - debug:
+        msg: TK2
+      changed_when: True
+      notify: tk2_handler
+    - template:
+        src: /home/ubuntu/environment/curso/playbooks/nginx/test.template
+        dest: /tmp/texto.txt    
+      vars:
+        ports:
+            - 80
+            - 8080
+        servers:
+            - server80
+            - server8080
+        todo: "{{ ports|zip(servers) |list}}"
+    - shell:
+        cmd: cat /tmp/texto.txt
+      register: salida
+    - debug:
+        msg: "{{ salida.stdout }}"
+
+  post_tasks:
+    - debug:
+        msg: POST
+      changed_when: True
+      notify: post_handler
+      
+  handlers:
+    - name: post_handler
+      debug:
+        msg: POST_HANDLER
+
+    - name: tk1_handler
+      debug:
+        msg: tk1_handler
+
+    - name: tk2_handler
+      debug:
+        msg: tk2_handler
+
+    - name: pre_handler
+      debug:
+        msg: pre_handler
